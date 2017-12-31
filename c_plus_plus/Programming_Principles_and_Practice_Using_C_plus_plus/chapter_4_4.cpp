@@ -2,7 +2,6 @@
 
 const int MIN_NUM = 1;
 const int MAX_NUM = 100;
-const int MAX_TRY_TIMES = 7;
 
 bool get_guess_result_from_usr(int guess_num);
 
