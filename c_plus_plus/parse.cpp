@@ -2,6 +2,8 @@
 #include <mutex>
 #include <cstring>
 #include <cstdlib>
+#include <vector>
+#include <memory>
 #include <boost/algorithm/string.hpp>
 
 enum OperateStatus {
@@ -91,28 +93,23 @@ class BaseParser {
     virtual ~BaseParser() {}
 
     const std::string get_item_to_parse() {
-        std::lock_guard<std::mutex> lock(_mutex);
         return _item_to_parse;
     }
 
     OperateStatus set_item_to_parse(const std::string& item_to_parse) {
-        std::lock_guard<std::mutex> lock(_mutex);
         _item_to_parse = item_to_parse;
         return SUCCESS;
     }
 
     std::shared_ptr<AbstractStringConventor<T> > get_conventor() {
-        std::lock_guard<std::mutex> lock(_mutex);
         return _conventor;
     }
 
     OperateStatus set_conventor(std::shared_ptr<AbstractStringConventor<T> > conventor) {
-        std::lock_guard<std::mutex> lock(_mutex);
         _conventor = conventor;   
     }
 
     virtual OperateStatus parse(T& value) {
-        std::lock_guard<std::mutex> lock(_mutex);
         if (_conventor == nullptr) {
             return FAIL;
         }
@@ -120,7 +117,6 @@ class BaseParser {
     }
 
   protected:
-    std::mutex _mutex;
     std::string _item_to_parse;
     std::shared_ptr<AbstractStringConventor<T> > _conventor;
 };
@@ -172,7 +168,7 @@ class StringSpliter {
 
   private:
     std::string _delimeter;
-}
+};
 
 template<typename T>
 class StringBuildInTypeArrayConventor : public AbstractStringConventor<std::vector<T> > {
@@ -183,9 +179,9 @@ class StringBuildInTypeArrayConventor : public AbstractStringConventor<std::vect
     }
     virtual ~StringBuildInTypeArrayConventor() {}
 
-    OperateStatus convert(const std::string& src, vector<T>& dst) {
+    OperateStatus convert(const std::string& src, std::vector<T>& dst) {
         // find index of ':'
-        std::string::size_typ colon_idx = src.find(':');
+        std::string::size_type colon_idx = src.find(':');
         if (colon_idx == std::string::npos) {
             return FAIL;
         }
@@ -212,7 +208,7 @@ class StringBuildInTypeArrayConventor : public AbstractStringConventor<std::vect
             return FAIL;
         }
 
-        T tmp_value = 0;
+        T tmp_value;
         for (auto& item : arr_vec) {
             if (_conventor->convert(item, tmp_value) != SUCCESS) {
                 return FAIL;
@@ -226,12 +222,12 @@ class StringBuildInTypeArrayConventor : public AbstractStringConventor<std::vect
   private:
     std::shared_ptr<AbstractStringConventor<T> > _conventor;
     std::shared_ptr<StringSpliter> _spliter;
-}
+};
 
 class IntArrayParser : public BaseParser<std::vector<int> > {
   public:
     IntArrayParser(const std::string& item_to_parse,
-                   std::shared_ptr<AbstractStringConventor<std::vector<int>>> conventor)
+                   std::shared_ptr<AbstractStringConventor<std::vector<int> >> conventor)
             : BaseParser(item_to_parse, conventor) {}
     virtual ~IntArrayParser() {}
 };
@@ -239,7 +235,7 @@ class IntArrayParser : public BaseParser<std::vector<int> > {
 class FloatArrayParser : public BaseParser<std::vector<float> > {
   public:
     FloatArrayParser(const std::string& item_to_parse,
-                     std::shared_ptr<AbstractStringConventor<std::vector<float>>> conventor)
+                     std::shared_ptr<AbstractStringConventor<std::vector<float> >> conventor)
             : BaseParser(item_to_parse, conventor) {}
     virtual ~FloatArrayParser() {}
 };
@@ -247,12 +243,12 @@ class FloatArrayParser : public BaseParser<std::vector<float> > {
 class CStyleStringArrayParser : public BaseParser<std::vector<char *> > {
   public:
     CStyleStringArrayParser(const std::string& item_to_parse,
-                            std::shared_ptr<AbstractStringConventor<std::vector<char *>>> conventor)
+                            std::shared_ptr<AbstractStringConventor<std::vector<char *> >> conventor)
             : BaseParser(item_to_parse, conventor) {}
     virtual ~CStyleStringArrayParser() {}
 };
 
 int main(int argc, char *argv[]) {
-
+    
     return 0;
 }
